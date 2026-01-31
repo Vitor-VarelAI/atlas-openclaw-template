@@ -1,7 +1,11 @@
 {
   "agent": {
-    "model": "anthropic/claude-sonnet-4-5",
-    "fallback": "anthropic/claude-sonnet-4",
+    "model": "openrouter/minimax/minimax-m2:free",
+    "fallbacks": [
+      "openrouter/google/gemini-2.0-flash-exp:free",
+      "anthropic/claude-haiku-4"
+    ],
+    "imageModel": "anthropic/claude-sonnet-4-5",
     "language": "pt-PT",
     "timezone": "Europe/Lisbon",
     "systemPrompt": "Tu és o Chief of Staff AI pessoal do Vitor. Falas sempre em Português PT. Geres projetos técnicos, tracking de vida pessoal, e manténs accountability. Sê conciso, proativo, e focado em ação.",
