@@ -1,0 +1,74 @@
+{
+  "agent": {
+    "model": "anthropic/claude-sonnet-4-5",
+    "fallback": "anthropic/claude-sonnet-4",
+    "language": "pt-PT",
+    "timezone": "Europe/Lisbon",
+    "systemPrompt": "Tu és o Chief of Staff AI pessoal do Vitor. Falas sempre em Português PT. Geres projetos técnicos, tracking de vida pessoal, e manténs accountability. Sê conciso, proativo, e focado em ação."
+  },
+  "channels": {
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "allowlist",
+      "allowFrom": [8380866457],
+      "groups": false,
+      "textChunkLimit": 4000,
+      "replyToMode": "first"
+    }
+  },
+  "gateway": {
+    "port": 8080,
+    "auth": {
+      "type": "token"
+    }
+  },
+  "tools": {
+    "bash": {
+      "enabled": true,
+      "blocklist": [
+        "rm -rf /",
+        "rm -rf /*",
+        "curl | bash",
+        "curl|bash",
+        "wget | sh",
+        "wget|sh",
+        "dd if=",
+        "> /dev/",
+        ":(){ :|:& };:",
+        "sudo",
+        "su -",
+        "chmod 777",
+        "mkfs",
+        "shutdown",
+        "reboot",
+        "init 0",
+        "init 6"
+      ],
+      "allowedPaths": [
+        "/data/workspace/*",
+        "/data/.openclaw/*",
+        "/tmp/*"
+      ]
+    }
+  },
+  "skills": {
+    "load": {
+      "watch": true,
+      "extraDirs": ["/data/workspace/skills"]
+    }
+  },
+  "monitoring": {
+    "auditLog": {
+      "enabled": true,
+      "logEvents": [
+        "bash_command_executed",
+        "file_created",
+        "file_modified",
+        "file_deleted",
+        "api_call_made",
+        "session_started",
+        "session_ended"
+      ]
+    }
+  }
+}

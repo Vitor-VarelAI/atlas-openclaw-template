@@ -1,0 +1,73 @@
+# === SECRETS - NUNCA COMMIT ===
+.env
+.env.local
+.env.production
+*.pem
+*.key
+secrets/
+credentials.json
+
+# === DOCS PESSOAIS ===
+# Informação pessoal que fica só local
+ReadME.md
+segurança.md
+DEPLOY.md
+memory/
+
+# === NODE ===
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# === OPENCLAW DATA ===
+# Dados locais que não devem ir para o repo
+logs/
+*.log
+audit.log
+errors.log
+
+# Sessões e cache
+.openclaw/
+sessions/
+cache/
+*.sqlite
+*.db
+
+# Backups locais
+backups/
+*.backup
+
+# === OS ===
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# === IDE ===
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# === BUILD ===
+dist/
+build/
+*.tsbuildinfo
+
+# === TEMP ===
+tmp/
+temp/
+*.tmp
+
+# === RAILWAY ===
+# Railway usa o repo, mas ignora estes
+.railway/
