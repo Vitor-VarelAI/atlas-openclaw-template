@@ -1,27 +1,69 @@
-# Use official OpenClaw image
-FROM ghcr.io/openclaw/openclaw:latest
+# Build openclaw from source to avoid npm packaging gaps (some dist files are not shipped).
+FROM node:22-bookworm AS openclaw-build
 
-# Switch to root to create directories
-USER root
+# Dependencies needed for openclaw build
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    git \
+    ca-certificates \
+    curl \
+    python3 \
+    make \
+    g++ \
+  && rm -rf /var/lib/apt/lists/*
 
-# Create directories with correct permissions
-RUN mkdir -p /data/.openclaw /data/workspace && \
-    chown -R node:node /data
+# Install Bun (openclaw build uses it)
+RUN curl -fsSL https://bun.sh/install | bash
+ENV PATH="/root/.bun/bin:${PATH}"
 
-# Switch back to node user
-USER node
+RUN corepack enable
 
-# Copy our custom configuration
-COPY --chown=node:node openclaw.json /data/.openclaw/openclaw.json
-COPY --chown=node:node skills/ /data/workspace/skills/
+WORKDIR /openclaw
 
-# Set environment variables
-ENV OPENCLAW_STATE_DIR=/data/.openclaw
-ENV OPENCLAW_WORKSPACE_DIR=/data/workspace
-ENV OPENCLAW_CONFIG_PATH=/data/.openclaw/openclaw.json
+# Pin to a known ref (tag/branch). If it doesn't exist, fall back to main.
+ARG OPENCLAW_GIT_REF=main
+RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/openclaw/openclaw.git .
 
-# Expose port
+# Patch: relax version requirements for packages that may reference unpublished versions.
+# Apply to all extension package.json files to handle workspace protocol (workspace:*).
+RUN set -eux; \
+  find ./extensions -name 'package.json' -type f | while read -r f; do \
+    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*">=[^"]+"/"openclaw": "*"/g' "$f"; \
+    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*"workspace:[^"]+"/"openclaw": "*"/g' "$f"; \
+  done
+
+RUN pnpm install --no-frozen-lockfile
+RUN pnpm build
+ENV OPENCLAW_PREFER_PNPM=1
+RUN pnpm ui:install && pnpm ui:build
+
+
+# Runtime image
+FROM node:22-bookworm
+ENV NODE_ENV=production
+
+RUN apt-get update \
+  && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Wrapper deps
+COPY package.json ./
+RUN npm install --omit=dev && npm cache clean --force
+
+# Copy built openclaw
+COPY --from=openclaw-build /openclaw /openclaw
+
+# Provide an openclaw executable
+RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"' > /usr/local/bin/openclaw \
+  && chmod +x /usr/local/bin/openclaw
+
+COPY src ./src
+
+# The wrapper listens on this port.
+ENV OPENCLAW_PUBLIC_PORT=8080
+ENV PORT=8080
 EXPOSE 8080
-
-# Start the gateway
-CMD ["openclaw", "gateway", "--port", "8080"]
+CMD ["node", "src/server.js"]
