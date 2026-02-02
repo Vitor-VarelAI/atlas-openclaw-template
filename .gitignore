@@ -2,17 +2,28 @@
 .env
 .env.local
 .env.production
+.env.*.local
 *.pem
 *.key
+*.p12
 secrets/
+credentials/
 credentials.json
+auth-profiles.json
+**/creds.json
+
+# API Keys que possam ter sido exportadas
+*.apikey
+*-api-key.txt
 
 # === DOCS PESSOAIS ===
 # Informação pessoal que fica só local
 ReadME.md
 segurança.md
 DEPLOY.md
+WALKTHROUGH.md
 memory/
+railway-config/
 
 # === NODE ===
 node_modules/
