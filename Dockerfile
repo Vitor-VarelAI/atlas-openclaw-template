@@ -1,12 +1,19 @@
 # Use official OpenClaw image
 FROM ghcr.io/openclaw/openclaw:latest
 
-# Create directories
-RUN mkdir -p /data/.openclaw /data/workspace
+# Switch to root to create directories
+USER root
+
+# Create directories with correct permissions
+RUN mkdir -p /data/.openclaw /data/workspace && \
+    chown -R node:node /data
+
+# Switch back to node user
+USER node
 
 # Copy our custom configuration
-COPY openclaw.json /data/.openclaw/openclaw.json
-COPY skills/ /data/workspace/skills/
+COPY --chown=node:node openclaw.json /data/.openclaw/openclaw.json
+COPY --chown=node:node skills/ /data/workspace/skills/
 
 # Set environment variables
 ENV OPENCLAW_STATE_DIR=/data/.openclaw
