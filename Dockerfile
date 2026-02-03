@@ -62,14 +62,18 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"'
 
 COPY src ./src
 
-# Create /data structure and pre-seed config for immediate gateway startup
+# Store defaults in container (NOT in /data which is volume-mounted)
+# The entrypoint script will copy these to /data on first run
+RUN mkdir -p /app/defaults
+COPY openclaw.json /app/defaults/openclaw.json
+COPY skills/ /app/defaults/skills/
+
+# Entrypoint script that copies defaults to volume on startup
+COPY entrypoint.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+
+# Create /data structure (will be empty until volume mounts)
 RUN mkdir -p /data/.openclaw /data/workspace/skills
-
-# Copy custom openclaw config (if present in repo)
-COPY openclaw.json /data/.openclaw/openclaw.json
-
-# Copy skills (if present in repo)
-COPY skills/ /data/workspace/skills/
 
 # Set environment to use /data paths
 ENV OPENCLAW_STATE_DIR=/data/.openclaw
@@ -80,4 +84,6 @@ ENV OPENCLAW_CONFIG_PATH=/data/.openclaw/openclaw.json
 ENV OPENCLAW_PUBLIC_PORT=8080
 ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "src/server.js"]
+
+# Use entrypoint script instead of direct node call
+CMD ["/app/entrypoint.sh"]
