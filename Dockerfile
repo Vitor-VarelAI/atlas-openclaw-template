@@ -4,12 +4,12 @@ FROM node:22-bookworm AS openclaw-build
 # Dependencies needed for openclaw build
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    git \
-    ca-certificates \
-    curl \
-    python3 \
-    make \
-    g++ \
+  git \
+  ca-certificates \
+  curl \
+  python3 \
+  make \
+  g++ \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Bun (openclaw build uses it)
@@ -28,8 +28,8 @@ RUN git clone --depth 1 --branch "${OPENCLAW_GIT_REF}" https://github.com/opencl
 # Apply to all extension package.json files to handle workspace protocol (workspace:*).
 RUN set -eux; \
   find ./extensions -name 'package.json' -type f | while read -r f; do \
-    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*">=[^"]+"/"openclaw": "*"/g' "$f"; \
-    sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*"workspace:[^"]+"/"openclaw": "*"/g' "$f"; \
+  sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*">=[^"]+"/"openclaw": "*"/g' "$f"; \
+  sed -i -E 's/"openclaw"[[:space:]]*:[[:space:]]*"workspace:[^"]+"/"openclaw": "*"/g' "$f"; \
   done
 
 RUN pnpm install --no-frozen-lockfile
@@ -44,7 +44,7 @@ ENV NODE_ENV=production
 
 RUN apt-get update \
   && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-    ca-certificates \
+  ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -61,6 +61,20 @@ RUN printf '%s\n' '#!/usr/bin/env bash' 'exec node /openclaw/dist/entry.js "$@"'
   && chmod +x /usr/local/bin/openclaw
 
 COPY src ./src
+
+# Create /data structure and pre-seed config for immediate gateway startup
+RUN mkdir -p /data/.openclaw /data/workspace/skills
+
+# Copy custom openclaw config (if present in repo)
+COPY openclaw.json /data/.openclaw/openclaw.json
+
+# Copy skills (if present in repo)
+COPY skills/ /data/workspace/skills/
+
+# Set environment to use /data paths
+ENV OPENCLAW_STATE_DIR=/data/.openclaw
+ENV OPENCLAW_WORKSPACE_DIR=/data/workspace
+ENV OPENCLAW_CONFIG_PATH=/data/.openclaw/openclaw.json
 
 # The wrapper listens on this port.
 ENV OPENCLAW_PUBLIC_PORT=8080
